@@ -1,0 +1,58 @@
+defaults:
+  - data: wnut17
+  - model: distilroberta_ner
+  - trainer: default
+  - experiment: source_only
+  - optuna: default
+  - _self_
+
+seed: 1
+
+paths:
+  output_root: outputs
+  output_dir: ${paths.output_root}/${experiment.name}/seed_${seed}
+  train_stage_dir: ${paths.output_dir}/train
+  selftrain_stage_dir: ${paths.output_dir}/selftrain
+  optuna_dir: ${paths.output_root}/optuna/${experiment.name}/seed_${seed}
+  sampled_ids_path: ${paths.output_dir}/sampled_example_ids.json
+  pseudo_labels_path: ${paths.output_dir}/pseudo_labels.jsonl
+  predictions_path: ${paths.output_dir}/predictions.jsonl
+  metrics_path: ${paths.output_dir}/metrics.json
+  per_label_metrics_path: ${paths.output_dir}/per_label_metrics.json
+  error_analysis_path: ${paths.output_dir}/error_analysis_sample.csv
+  results_summary_path: ${paths.output_dir}/results_summary.csv
+  best_checkpoint_path: ${paths.output_dir}/best_checkpoint.txt
+  results_comparison_path: ${paths.output_dir}/results_comparison.csv
+  error_type_reduction_path: ${paths.output_dir}/error_type_reduction.csv
+  case_study_summary_path: ${paths.output_dir}/case_study_summary.md
+
+normalization:
+  normalize_usernames: true
+  normalize_urls: true
+  collapse_repeated_chars: true
+  repeated_char_min_repeats: 3
+  repeated_char_keep: 2
+  normalize_hashtags: false
+
+clearml:
+  enabled: true
+  project_name: nlp-course-ner-domain-adaptation
+  task_name: ${experiment.name}_seed_${seed}
+  tags:
+    - ner
+    - domain-adaptation
+    - wnut17
+  offline_mode: false
+  allow_no_credentials: true
+
+reporting:
+  max_error_rows: 1000
+  rare_token_threshold: 1
+  gain_metric: test_f1
+
+hydra:
+  run:
+    dir: ${paths.output_dir}
+  job:
+    chdir: false
+
