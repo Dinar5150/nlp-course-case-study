@@ -2,18 +2,11 @@
 
 from __future__ import annotations
 
-import json
 import random
 from pathlib import Path
-from typing import Any
 
 import numpy as np
-import pandas as pd
-
-try:
-    import torch
-except ImportError:  # pragma: no cover - torch is expected at runtime
-    torch = None
+import torch
 
 
 def get_repo_root() -> Path:
@@ -40,57 +33,26 @@ def set_global_seed(seed: int) -> None:
     """Set deterministic seeds for Python, NumPy, and PyTorch."""
     random.seed(seed)
     np.random.seed(seed)
-    if torch is not None:
-        torch.manual_seed(seed)
-        if torch.cuda.is_available():
-            torch.cuda.manual_seed_all(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
 
 
-def save_json(path_like: str | Path, payload: Any) -> None:
-    """Write JSON with stable formatting."""
-    path = resolve_path(path_like)
-    ensure_dir(path.parent)
-    with path.open("w", encoding="utf-8") as handle:
-        json.dump(payload, handle, indent=2, ensure_ascii=True)
+def get_output_dir(cfg: object) -> Path:
+    """Return the main output directory for one run."""
+    return ensure_dir(cfg.paths.output_dir)
 
 
-def save_jsonl(path_like: str | Path, rows: list[dict[str, Any]]) -> None:
-    """Write JSONL rows."""
-    path = resolve_path(path_like)
-    ensure_dir(path.parent)
-    with path.open("w", encoding="utf-8") as handle:
-        for row in rows:
-            handle.write(json.dumps(row, ensure_ascii=True) + "\n")
+def get_stage_dir(cfg: object, stage_name: str) -> Path:
+    """Return a directory for an intermediate training stage."""
+    return ensure_dir(get_output_dir(cfg) / stage_name)
 
 
-def save_dataframe(path_like: str | Path, frame: pd.DataFrame) -> None:
-    """Write a DataFrame as CSV."""
-    path = resolve_path(path_like)
-    ensure_dir(path.parent)
-    frame.to_csv(path, index=False)
-
-
-def write_text(path_like: str | Path, text: str) -> None:
-    """Write a UTF-8 text file."""
-    path = resolve_path(path_like)
-    ensure_dir(path.parent)
-    path.write_text(text, encoding="utf-8")
-
-
-def flatten_dict(value: Any, prefix: str = "") -> dict[str, Any]:
-    """Flatten nested dictionaries into dot-separated keys."""
-    items: dict[str, Any] = {}
-
-    if isinstance(value, dict):
-        for key, nested_value in value.items():
-            nested_prefix = f"{prefix}.{key}" if prefix else str(key)
-            items.update(flatten_dict(nested_value, nested_prefix))
-        return items
-
-    if isinstance(value, list):
-        items[prefix] = json.dumps(value)
-        return items
-
-    items[prefix] = value
-    return items
-
+def get_optuna_dir(cfg: object) -> Path:
+    """Return the Optuna output directory for one experiment and seed."""
+    run_name = (
+        f"{cfg.experiment.name}_shots_{int(cfg.experiment.shot_count)}"
+        f"_norm_{bool(cfg.experiment.do_normalization)}"
+        f"_selftrain_{bool(cfg.experiment.do_self_training)}"
+    )
+    return ensure_dir(Path(str(cfg.paths.output_root)) / "optuna" / run_name / f"seed_{int(cfg.seed)}")

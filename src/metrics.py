@@ -8,7 +8,6 @@ from typing import Any
 import evaluate
 import numpy as np
 import pandas as pd
-from seqeval.metrics import accuracy_score, classification_report, f1_score, precision_score, recall_score
 from seqeval.scheme import IOB2
 
 from src.normalize import is_social_noise_token
@@ -30,10 +29,7 @@ def get_seqeval_metric() -> Any:
     """Load the Hugging Face Evaluate seqeval wrapper once."""
     global _SEQEVAL_METRIC
     if _SEQEVAL_METRIC is None:
-        try:
-            _SEQEVAL_METRIC = evaluate.load("seqeval")
-        except Exception:
-            _SEQEVAL_METRIC = False
+        _SEQEVAL_METRIC = evaluate.load("seqeval")
     return _SEQEVAL_METRIC
 
 
@@ -74,50 +70,24 @@ def compute_seqeval_metrics(
     decoded_predictions, decoded_labels = decode_prediction_sequences(predictions, labels, id2label)
     metric = get_seqeval_metric()
 
-    if metric:
-        results = metric.compute(
-            predictions=decoded_predictions,
-            references=decoded_labels,
-            mode="strict",
-            scheme=IOB2,
-        )
-        overall = {
-            "precision": float(results["overall_precision"]),
-            "recall": float(results["overall_recall"]),
-            "f1": float(results["overall_f1"]),
-            "accuracy": float(results["overall_accuracy"]),
-        }
-        per_label = {
-            label: {
-                "precision": float(results.get(label, {}).get("precision", 0.0)),
-                "recall": float(results.get(label, {}).get("recall", 0.0)),
-                "f1": float(results.get(label, {}).get("f1", 0.0)),
-                "number": int(results.get(label, {}).get("number", 0)),
-            }
-            for label in ("PER", "LOC", "ORG")
-        }
-        return overall, per_label, decoded_predictions, decoded_labels
-
-    report = classification_report(
-        decoded_labels,
-        decoded_predictions,
+    results = metric.compute(
+        predictions=decoded_predictions,
+        references=decoded_labels,
         mode="strict",
         scheme=IOB2,
-        output_dict=True,
-        zero_division=0,
     )
     overall = {
-        "precision": float(precision_score(decoded_labels, decoded_predictions, mode="strict", scheme=IOB2)),
-        "recall": float(recall_score(decoded_labels, decoded_predictions, mode="strict", scheme=IOB2)),
-        "f1": float(f1_score(decoded_labels, decoded_predictions, mode="strict", scheme=IOB2)),
-        "accuracy": float(accuracy_score(decoded_labels, decoded_predictions)),
+        "precision": float(results["overall_precision"]),
+        "recall": float(results["overall_recall"]),
+        "f1": float(results["overall_f1"]),
+        "accuracy": float(results["overall_accuracy"]),
     }
     per_label = {
         label: {
-            "precision": float(report.get(label, {}).get("precision", 0.0)),
-            "recall": float(report.get(label, {}).get("recall", 0.0)),
-            "f1": float(report.get(label, {}).get("f1-score", 0.0)),
-            "number": int(report.get(label, {}).get("support", 0)),
+            "precision": float(results.get(label, {}).get("precision", 0.0)),
+            "recall": float(results.get(label, {}).get("recall", 0.0)),
+            "f1": float(results.get(label, {}).get("f1", 0.0)),
+            "number": int(results.get(label, {}).get("number", 0)),
         }
         for label in ("PER", "LOC", "ORG")
     }

@@ -11,8 +11,6 @@ from datasets import Dataset, DatasetDict, load_dataset
 
 from src.model_utils import LABEL2ID
 from src.normalize import normalize_tokens
-from src.utils import save_json
-
 WNUT_TO_TARGET = {
     "B-person": "B-PER",
     "I-person": "I-PER",
@@ -36,6 +34,7 @@ class PreparedDatasets:
     validation_tokenized: Dataset
     test_tokenized: Dataset
     token_counts: Counter[str]
+    sampled_example_ids: list[str]
 
 
 def map_label_name_to_target_id(label_name: str) -> int:
@@ -171,15 +170,6 @@ def prepare_datasets(cfg: object, tokenizer: Any) -> PreparedDatasets:
         seed=int(cfg.seed),
     )
 
-    save_json(
-        cfg.paths.sampled_ids_path,
-        {
-            "seed": int(cfg.seed),
-            "shot_count": int(cfg.experiment.shot_count),
-            "example_ids": list(train_raw["example_id"]) if len(train_raw) > 0 else [],
-        },
-    )
-
     train_tokenized = None
     if len(train_raw) > 0:
         train_tokenized = tokenize_dataset(train_raw, tokenizer, max_length=int(cfg.trainer.max_length))
@@ -197,5 +187,5 @@ def prepare_datasets(cfg: object, tokenizer: Any) -> PreparedDatasets:
         validation_tokenized=validation_tokenized,
         test_tokenized=test_tokenized,
         token_counts=count_tokens(train_full_raw),
+        sampled_example_ids=list(train_raw["example_id"]) if len(train_raw) > 0 else [],
     )
-

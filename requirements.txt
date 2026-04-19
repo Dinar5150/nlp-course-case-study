@@ -6,9 +6,8 @@ seqeval>=1.2.2
 hydra-core>=1.3
 omegaconf>=2.3
 accelerate>=0.28
-clearml>=1.16
 optuna>=3.6
+clearml>=1.16
 pandas>=2.0
 numpy>=1.24
 matplotlib>=3.7
-

@@ -10,7 +10,6 @@ import torch
 from datasets import Dataset, concatenate_datasets
 
 from src.model_utils import ID2LABEL
-from src.utils import save_jsonl
 
 
 @dataclass
@@ -41,11 +40,9 @@ def generate_pseudo_labels(
     tokenizer: Any,
     max_length: int,
     confidence_threshold: float,
-    output_path: str,
 ) -> PseudoLabelResult:
     """Generate sentence-level pseudo labels from a model."""
     if len(raw_dataset) == 0:
-        save_jsonl(output_path, [])
         return PseudoLabelResult(dataset=_empty_pseudo_dataset(), records=[], skipped_truncated=0)
 
     device = next(model.parameters()).device
@@ -116,8 +113,6 @@ def generate_pseudo_labels(
 
         audit_rows.append(audit_record)
 
-    save_jsonl(output_path, audit_rows)
-
     if not kept_rows:
         return PseudoLabelResult(dataset=_empty_pseudo_dataset(), records=audit_rows, skipped_truncated=skipped_truncated)
 
@@ -162,4 +157,3 @@ def merge_gold_and_pseudo(gold_dataset: Dataset, pseudo_dataset: Dataset) -> Dat
     if len(gold_with_metadata) == 0:
         return pseudo_dataset
     return concatenate_datasets([gold_with_metadata, pseudo_dataset])
-

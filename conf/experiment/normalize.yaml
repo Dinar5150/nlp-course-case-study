@@ -1,8 +1,0 @@
-name: normalize
-shot_count: 0
-do_finetune: false
-do_normalization: true
-do_self_training: false
-pseudo_label_threshold: 0.95
-self_training_epochs: 2
-

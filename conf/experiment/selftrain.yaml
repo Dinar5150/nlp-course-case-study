@@ -1,8 +1,0 @@
-name: selftrain
-shot_count: 100
-do_finetune: true
-do_normalization: false
-do_self_training: true
-pseudo_label_threshold: 0.95
-self_training_epochs: 2
-

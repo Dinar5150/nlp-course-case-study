@@ -1,8 +1,0 @@
-name: fewshot_50
-shot_count: 50
-do_finetune: true
-do_normalization: false
-do_self_training: false
-pseudo_label_threshold: 0.95
-self_training_epochs: 2
-
