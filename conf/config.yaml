@@ -17,7 +17,7 @@ experiment:
   do_normalization: false
   do_self_training: false
   pseudo_label_threshold: 0.95
-  self_training_epochs: 2
+  self_training_epochs: 10
 
 clearml:
   project_name: nlp-course-ner-domain-adaptation

@@ -18,6 +18,32 @@ from src.pseudo_label import generate_pseudo_labels, merge_gold_and_pseudo
 from src.utils import get_output_dir, get_stage_dir, set_global_seed
 
 
+class ClearMLEpochCallback(TrainerCallback):
+    """Log only the most useful per-epoch training curves to ClearML."""
+
+    def __init__(self, tracker: Any, stage_name: str) -> None:
+        self.tracker = tracker
+        self.stage_name = stage_name
+
+    def on_log(self, args, state, control, logs=None, **kwargs):  # type: ignore[override]
+        if not logs or state.epoch is None:
+            return control
+        epoch = int(round(float(state.epoch)))
+        if "loss" in logs:
+            self.tracker.log_scalar("train_epoch", f"{self.stage_name}_loss", float(logs["loss"]), iteration=epoch)
+        return control
+
+    def on_evaluate(self, args, state, control, metrics=None, **kwargs):  # type: ignore[override]
+        if not metrics or state.epoch is None:
+            return control
+        epoch = int(round(float(state.epoch)))
+        if "eval_f1" in metrics:
+            self.tracker.log_scalar("eval_epoch", f"{self.stage_name}_f1", float(metrics["eval_f1"]), iteration=epoch)
+        if "eval_loss" in metrics:
+            self.tracker.log_scalar("eval_epoch", f"{self.stage_name}_loss", float(metrics["eval_loss"]), iteration=epoch)
+        return control
+
+
 def build_training_arguments(cfg: DictConfig, output_dir: str, do_train: bool, num_train_epochs: int | None = None) -> TrainingArguments:
     """Create a compact set of Trainer arguments."""
     return TrainingArguments(
@@ -35,8 +61,7 @@ def build_training_arguments(cfg: DictConfig, output_dir: str, do_train: bool, n
         greater_is_better=True,
         max_grad_norm=1.0,
         fp16=bool(cfg.trainer.fp16) and torch.cuda.is_available(),
-        logging_strategy="steps",
-        logging_steps=int(cfg.trainer.logging_steps),
+        logging_strategy="epoch" if do_train else "no",
         save_total_limit=2,
         seed=int(cfg.seed),
         data_seed=int(cfg.seed),
@@ -113,7 +138,7 @@ def run_experiment(cfg: DictConfig, callbacks: list[TrainerCallback] | None = No
                 train_dataset=prepared.train_tokenized,
                 eval_dataset=prepared.validation_tokenized,
                 num_train_epochs=int(cfg.trainer.num_train_epochs),
-                callbacks=callbacks,
+                callbacks=[ClearMLEpochCallback(tracker, "train"), *(callbacks or [])],
             )
             training_metrics = trainer.train().metrics
             model = trainer.model
@@ -140,7 +165,7 @@ def run_experiment(cfg: DictConfig, callbacks: list[TrainerCallback] | None = No
                     train_dataset=merged_tokenized,
                     eval_dataset=prepared.validation_tokenized,
                     num_train_epochs=int(cfg.experiment.self_training_epochs),
-                    callbacks=callbacks,
+                    callbacks=[ClearMLEpochCallback(tracker, "selftrain"), *(callbacks or [])],
                 )
                 training_metrics.update({f"selftrain_{key}": value for key, value in trainer.train().metrics.items()})
                 model = trainer.model
