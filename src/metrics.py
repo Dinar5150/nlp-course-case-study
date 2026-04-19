@@ -8,7 +8,6 @@ from typing import Any
 import evaluate
 import numpy as np
 import pandas as pd
-from seqeval.scheme import IOB2
 
 from src.normalize import is_social_noise_token
 
@@ -74,7 +73,7 @@ def compute_seqeval_metrics(
         predictions=decoded_predictions,
         references=decoded_labels,
         mode="strict",
-        scheme=IOB2,
+        scheme="IOB2",
     )
     overall = {
         "precision": float(results["overall_precision"]),

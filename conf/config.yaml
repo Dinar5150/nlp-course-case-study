@@ -22,7 +22,7 @@ experiment:
 
 clearml:
   project_name: nlp-course-ner-domain-adaptation
-  task_name: ${experiment.name}_seed_${seed}
+  task_name: ${experiment.name}_shots_${experiment.shot_count}_norm_${experiment.do_normalization}_selftrain_${experiment.do_self_training}_seed_${seed}
   offline_mode: false
 
 normalization:
