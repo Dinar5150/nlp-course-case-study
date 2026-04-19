@@ -55,26 +55,33 @@ python -m src.train experiment=source_only seed=1
 Few-shot adaptation:
 
 ```bash
-python -m src.train experiment=adapt seed=1 experiment.shot_count=50
 python -m src.train experiment=adapt seed=1 experiment.shot_count=100
+python -m src.train experiment=adapt seed=1 experiment.shot_count=300
+python -m src.train experiment=adapt seed=1 experiment.shot_count=500
 ```
 
 Normalization:
 
 ```bash
 python -m src.train experiment=adapt seed=1 experiment.shot_count=100 experiment.do_normalization=true
+python -m src.train experiment=adapt seed=1 experiment.shot_count=300 experiment.do_normalization=true
+python -m src.train experiment=adapt seed=1 experiment.shot_count=500 experiment.do_normalization=true
 ```
 
 Self-training:
 
 ```bash
 python -m src.train experiment=adapt seed=1 experiment.shot_count=100 experiment.do_self_training=true
+python -m src.train experiment=adapt seed=1 experiment.shot_count=300 experiment.do_self_training=true
+python -m src.train experiment=adapt seed=1 experiment.shot_count=500 experiment.do_self_training=true
 ```
 
 Combined adaptation:
 
 ```bash
 python -m src.train experiment=adapt seed=1 experiment.shot_count=100 experiment.do_normalization=true experiment.do_self_training=true
+python -m src.train experiment=adapt seed=1 experiment.shot_count=300 experiment.do_normalization=true experiment.do_self_training=true
+python -m src.train experiment=adapt seed=1 experiment.shot_count=500 experiment.do_normalization=true experiment.do_self_training=true
 ```
 
 ## What Gets Logged

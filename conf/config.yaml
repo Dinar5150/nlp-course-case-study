@@ -13,6 +13,10 @@ paths:
 
 experiment:
   shot_count: 100
+  shot_candidates:
+    - 100
+    - 300
+    - 500
   do_finetune: true
   do_normalization: false
   do_self_training: false
