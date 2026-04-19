@@ -2,7 +2,6 @@ defaults:
   - data: wnut17
   - model: distilroberta_ner
   - trainer: default
-  - optuna: default
   - _self_
   - experiment: source_only
 

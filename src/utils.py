@@ -46,13 +46,3 @@ def get_output_dir(cfg: object) -> Path:
 def get_stage_dir(cfg: object, stage_name: str) -> Path:
     """Return a directory for an intermediate training stage."""
     return ensure_dir(get_output_dir(cfg) / stage_name)
-
-
-def get_optuna_dir(cfg: object) -> Path:
-    """Return the Optuna output directory for one experiment and seed."""
-    run_name = (
-        f"{cfg.experiment.name}_shots_{int(cfg.experiment.shot_count)}"
-        f"_norm_{bool(cfg.experiment.do_normalization)}"
-        f"_selftrain_{bool(cfg.experiment.do_self_training)}"
-    )
-    return ensure_dir(Path(str(cfg.paths.output_root)) / "optuna" / run_name / f"seed_{int(cfg.seed)}")

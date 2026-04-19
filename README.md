@@ -1,13 +1,12 @@
 # NER Adaptation Experiments
 
-This repository is a small `Hydra + Optuna + ClearML` experiment runner for a news-to-social NER adaptation case study. It transfers `philschmid/distilroberta-base-ner-conll2003` to WNUT17 and keeps only the overlapping labels `PER`, `LOC`, and `ORG`.
+This repository is a small `Hydra + ClearML` experiment runner for a news-to-social NER adaptation case study. It transfers `philschmid/distilroberta-base-ner-conll2003` to WNUT17 and keeps only the overlapping labels `PER`, `LOC`, and `ORG`.
 
 The repo does one thing: run experiments and log them to ClearML.
 
 ## Stack
 
 - Hydra for config composition and CLI overrides
-- Optuna for hyperparameter search
 - ClearML for experiment tracking
 - Hugging Face Transformers and Datasets for training and evaluation
 
@@ -78,13 +77,6 @@ Combined adaptation:
 python -m src.train experiment=adapt seed=1 experiment.shot_count=100 experiment.do_normalization=true experiment.do_self_training=true
 ```
 
-Optuna:
-
-```bash
-python -m src.optuna_search experiment=adapt seed=1 experiment.shot_count=100 optuna.n_trials=10
-python -m src.optuna_search experiment=adapt seed=1 experiment.shot_count=100 experiment.do_self_training=true optuna.n_trials=10
-```
-
 ## What Gets Logged
 
 Each run logs to ClearML:
@@ -96,6 +88,5 @@ Each run logs to ClearML:
 - sampled example IDs
 - pseudo-label audit records when self-training is enabled
 - decoded predictions
-- Optuna best params, best score, and trial table
 
 The only local output that remains is the Hugging Face training directory under `outputs/`, because `Trainer` needs a filesystem location for checkpoints.

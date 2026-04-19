@@ -39,6 +39,12 @@ class ClearMLTracker:
                 continue
             self.logger.report_scalar(title=title, series=str(key), value=float(value), iteration=0)
 
+    def log_scalar(self, title: str, series: str, value: float, iteration: int = 0) -> None:
+        """Log one scalar value."""
+        if self.logger is None:
+            return
+        self.logger.report_scalar(title=title, series=series, value=float(value), iteration=iteration)
+
     def log_table(self, title: str, table: pd.DataFrame) -> None:
         """Log a dataframe as a ClearML table."""
         if self.logger is None or table.empty:

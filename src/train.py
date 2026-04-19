@@ -171,16 +171,25 @@ def run_experiment(cfg: DictConfig, callbacks: list[TrainerCallback] | None = No
             rare_token_threshold=int(cfg.error_analysis.rare_token_threshold),
             max_rows=int(cfg.error_analysis.max_error_rows),
         )
+        error_counts = {
+            "boundary": int(error_analysis["boundary_error"].fillna(False).astype(bool).sum()) if not error_analysis.empty else 0,
+            "label_confusion": int(error_analysis["label_confusion"].fillna(False).astype(bool).sum()) if not error_analysis.empty else 0,
+            "noisy_token": int(error_analysis["noisy_token_issue"].fillna(False).astype(bool).sum()) if not error_analysis.empty else 0,
+            "oov_rare": int(error_analysis["oov_rare_issue"].fillna(False).astype(bool).sum()) if not error_analysis.empty else 0,
+        }
 
-        tracker.log_metrics("validation", validation_metrics)
-        tracker.log_metrics("test", test_metrics)
-        tracker.log_metrics("training", training_metrics)
+        tracker.log_scalar("final", "validation_f1", float(validation_metrics["f1"]))
+        tracker.log_scalar("final", "test_f1", float(test_metrics["f1"]))
+        tracker.log_scalar("data", "train_examples", int(len(prepared.train_raw)))
+        tracker.log_scalar("data", "pseudo_examples", int(pseudo_examples))
+        tracker.log_metrics("error_types", error_counts)
         tracker.upload_artifact(
             "run_summary",
             {
                 "validation": validation_metrics,
                 "test": test_metrics,
                 "training": training_metrics,
+                "error_counts": error_counts,
                 "validation_per_label": validation_per_label,
                 "test_per_label": test_per_label,
                 "train_examples": int(len(prepared.train_raw)),
