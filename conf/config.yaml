@@ -12,16 +12,16 @@ paths:
   output_dir: ${paths.output_root}/${experiment.name}_shots_${experiment.shot_count}_norm_${experiment.do_normalization}_selftrain_${experiment.do_self_training}/seed_${seed}
 
 experiment:
-  shot_count: 100
+  shot_count: 250
   shot_candidates:
     - 100
-    - 300
-    - 500
+    - 250
   do_finetune: true
   do_normalization: false
   do_self_training: false
-  pseudo_label_threshold: 0.95
-  self_training_epochs: 10
+  pseudo_label_threshold: 0.98
+  pseudo_label_max_multiplier: 1
+  self_training_epochs: 3
 
 clearml:
   project_name: nlp-course-ner-domain-adaptation
@@ -31,7 +31,7 @@ clearml:
 normalization:
   normalize_usernames: true
   normalize_urls: true
-  collapse_repeated_chars: true
+  collapse_repeated_chars: false
   repeated_char_min_repeats: 3
   repeated_char_keep: 2
   normalize_hashtags: false

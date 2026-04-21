@@ -40,6 +40,7 @@ def generate_pseudo_labels(
     tokenizer: Any,
     max_length: int,
     confidence_threshold: float,
+    max_samples: int,
 ) -> PseudoLabelResult:
     """Generate sentence-level pseudo labels from a model."""
     if len(raw_dataset) == 0:
@@ -74,29 +75,36 @@ def generate_pseudo_labels(
 
         predicted_tags: list[int] = []
         token_confidences: list[float] = []
+        entity_token_confidences: list[float] = []
         seen_word_ids: set[int] = set()
         for token_index, word_id in enumerate(word_ids):
             if word_id is None or word_id in seen_word_ids:
                 continue
             seen_word_ids.add(word_id)
             label_id = int(np.argmax(probabilities[token_index]))
+            confidence = float(probabilities[token_index][label_id])
             predicted_tags.append(label_id)
-            token_confidences.append(float(probabilities[token_index][label_id]))
+            token_confidences.append(confidence)
+            if label_id != 0:
+                entity_token_confidences.append(confidence)
 
         if len(predicted_tags) != len(row["tokens"]):
             skipped_truncated += 1
             continue
 
-        sentence_confidence = float(np.mean(token_confidences)) if token_confidences else 0.0
+        has_entity_prediction = any(label_id != 0 for label_id in predicted_tags)
+        sentence_confidence = float(np.mean(entity_token_confidences)) if entity_token_confidences else 0.0
         audit_record = {
             "example_id": row["example_id"],
             "tokens": row["original_tokens"],
             "model_tokens": row["tokens"],
             "predicted_labels": [ID2LABEL[label_id] for label_id in predicted_tags],
             "confidence": sentence_confidence,
+            "token_confidence": float(np.mean(token_confidences)) if token_confidences else 0.0,
+            "has_entity_prediction": has_entity_prediction,
         }
 
-        if sentence_confidence >= confidence_threshold:
+        if sentence_confidence >= confidence_threshold and has_entity_prediction:
             kept_rows.append(
                 {
                     "example_id": f"pseudo-{row['example_id']}",
@@ -115,6 +123,13 @@ def generate_pseudo_labels(
 
     if not kept_rows:
         return PseudoLabelResult(dataset=_empty_pseudo_dataset(), records=audit_rows, skipped_truncated=skipped_truncated)
+
+    kept_rows.sort(key=lambda row: float(row["pseudo_confidence"]), reverse=True)
+    if max_samples > 0:
+        kept_rows = kept_rows[:max_samples]
+    kept_example_ids = {row["example_id"].removeprefix("pseudo-") for row in kept_rows}
+    for audit_record in audit_rows:
+        audit_record["kept"] = audit_record["example_id"] in kept_example_ids
 
     pseudo_dataset = Dataset.from_dict(
         {

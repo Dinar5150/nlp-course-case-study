@@ -8,7 +8,13 @@ import pandas as pd
 import hydra
 import torch
 from omegaconf import DictConfig
-from transformers import DataCollatorForTokenClassification, Trainer, TrainerCallback, TrainingArguments
+from transformers import (
+    DataCollatorForTokenClassification,
+    EarlyStoppingCallback,
+    Trainer,
+    TrainerCallback,
+    TrainingArguments,
+)
 
 from src.clearml_utils import init_clearml_task
 from src.data import prepare_datasets, tokenize_dataset
@@ -67,6 +73,23 @@ def build_training_arguments(cfg: DictConfig, output_dir: str, do_train: bool, n
         data_seed=int(cfg.seed),
         report_to=[],
     )
+
+
+def build_training_callbacks(
+    cfg: DictConfig,
+    tracker: Any,
+    stage_name: str,
+    callbacks: list[TrainerCallback] | None = None,
+) -> list[TrainerCallback]:
+    """Build a compact callback list for training runs."""
+    built_callbacks: list[TrainerCallback] = [ClearMLEpochCallback(tracker, stage_name)]
+    if int(cfg.trainer.early_stopping_patience) > 0:
+        built_callbacks.append(
+            EarlyStoppingCallback(early_stopping_patience=int(cfg.trainer.early_stopping_patience))
+        )
+    if callbacks:
+        built_callbacks.extend(callbacks)
+    return built_callbacks
 
 
 def build_trainer(
@@ -138,7 +161,7 @@ def run_experiment(cfg: DictConfig, callbacks: list[TrainerCallback] | None = No
                 train_dataset=prepared.train_tokenized,
                 eval_dataset=prepared.validation_tokenized,
                 num_train_epochs=int(cfg.trainer.num_train_epochs),
-                callbacks=[ClearMLEpochCallback(tracker, "train"), *(callbacks or [])],
+                callbacks=build_training_callbacks(cfg, tracker, "train", callbacks),
             )
             training_metrics = trainer.train().metrics
             model = trainer.model
@@ -151,6 +174,7 @@ def run_experiment(cfg: DictConfig, callbacks: list[TrainerCallback] | None = No
                 tokenizer=tokenizer,
                 max_length=int(cfg.trainer.max_length),
                 confidence_threshold=float(cfg.experiment.pseudo_label_threshold),
+                max_samples=int(len(prepared.train_raw) * int(cfg.experiment.pseudo_label_max_multiplier)),
             )
             pseudo_examples = len(pseudo_result.dataset)
             tracker.upload_artifact("pseudo_labels", pseudo_result.records)
@@ -165,7 +189,7 @@ def run_experiment(cfg: DictConfig, callbacks: list[TrainerCallback] | None = No
                     train_dataset=merged_tokenized,
                     eval_dataset=prepared.validation_tokenized,
                     num_train_epochs=int(cfg.experiment.self_training_epochs),
-                    callbacks=[ClearMLEpochCallback(tracker, "selftrain"), *(callbacks or [])],
+                    callbacks=build_training_callbacks(cfg, tracker, "selftrain", callbacks),
                 )
                 training_metrics.update({f"selftrain_{key}": value for key, value in trainer.train().metrics.items()})
                 model = trainer.model
