@@ -3,10 +3,6 @@ transformers
 datasets
 evaluate
 seqeval
-hydra-core
-omegaconf
 accelerate
-clearml
 pandas
 numpy
-matplotlib

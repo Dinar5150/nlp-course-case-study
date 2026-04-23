@@ -15,3 +15,26 @@ dist/
 build/
 pip-wheel-metadata/
 
+# Local IDE / editor files
+.vscode/
+.idea/
+
+# Temporary training / evaluation directories
+tmp_trainer/
+tmp_eval/
+notebooks/tmp_trainer/
+notebooks/
+
+# Hydra / experiment leftovers
+.hydra/
+*.hydra/
+
+# Logs
+*.log
+
+# Notebook execution noise
+notebook_outputs/
+
+# Local model / dataset caches if created inside repo
+.cache/
+huggingface/

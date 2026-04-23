@@ -1,5 +1,0 @@
-dataset_name: flaitenberger/wnut_17
-cache_dir: null
-train_split: train
-validation_split: validation
-test_split: test

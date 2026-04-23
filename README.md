@@ -34,7 +34,7 @@ The main few-shot setting is `250` sentences. The sampler is deterministic and l
 
 - it tries to cover `ORG`, `PER`, and `LOC` early
 - it prefers entity-bearing sentences over all-`O` sentences
-- it uses the run seed only for deterministic tie-breaking
+- it uses `seed=1` for deterministic tie-breaking
 
 ## Install
 
@@ -93,28 +93,14 @@ python -m src.train experiment=adapt seed=1 experiment.shot_count=100 experiment
 python -m src.train experiment=adapt seed=1 experiment.shot_count=250 experiment.do_normalization=true experiment.do_self_training=true
 ```
 
-Recommended three-seed matrix:
+Recommended single-run suite:
 
 ```bash
 python -m src.train experiment=source_only seed=1
-python -m src.train experiment=source_only seed=2
-python -m src.train experiment=source_only seed=3
-
 python -m src.train experiment=adapt seed=1 experiment.shot_count=100
-python -m src.train experiment=adapt seed=2 experiment.shot_count=100
-python -m src.train experiment=adapt seed=3 experiment.shot_count=100
-
 python -m src.train experiment=adapt seed=1 experiment.shot_count=250
-python -m src.train experiment=adapt seed=2 experiment.shot_count=250
-python -m src.train experiment=adapt seed=3 experiment.shot_count=250
-
 python -m src.train experiment=adapt seed=1 experiment.shot_count=250 experiment.do_self_training=true
-python -m src.train experiment=adapt seed=2 experiment.shot_count=250 experiment.do_self_training=true
-python -m src.train experiment=adapt seed=3 experiment.shot_count=250 experiment.do_self_training=true
-
 python -m src.train experiment=adapt seed=1 experiment.shot_count=250 experiment.do_normalization=true
-python -m src.train experiment=adapt seed=2 experiment.shot_count=250 experiment.do_normalization=true
-python -m src.train experiment=adapt seed=3 experiment.shot_count=250 experiment.do_normalization=true
 ```
 
 ## What Gets Logged
